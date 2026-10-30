@@ -1,0 +1,41 @@
+{
+  "gateway": {
+    "mode": "local",
+    "auth": {
+      "mode": "token",
+      "token": { "source": "env", "provider": "default", "id": "OPENCLAW_GATEWAY_TOKEN" }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": { "primary": "ollama/ministral-3:3b" },
+      "heartbeat": { "every": "0m" },
+      "experimental": { "localModelLean": true }
+    }
+  },
+  "tools": { "profile": "coding" },
+  "plugins": {
+    "entries": {
+      "ollama": { "enabled": true }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "ollama": {
+        "baseUrl": "http://host.docker.internal:11434",
+        "apiKey": "ollama-local",
+        "api": "ollama",
+        "models": [
+          {
+            "id": "ministral-3:3b",
+            "name": "ministral-3:3b",
+            "input": ["text"],
+            "contextTokens": 16384,
+            "params": { "num_ctx": 16384 }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+# OpenClaw lokal starten (Anleitung in README.md):
+#   echo "OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 24)" | tee .env
+#   docker compose up -d   →  http://localhost:18789
+# Angepasst gegenüber der offiziellen Datei: feste Version, Port nur auf diesem Rechner,
+# fertige Konfiguration für Ollama (openclaw.json), Arbeitsbereich im Ordner workspace.
+services:
+  # Kopiert beim ersten Start openclaw.json in das Volume, danach tut er nichts mehr.
+  openclaw-init:
+    image: openclaw/openclaw:${OPENCLAW_VERSION:-2026.10.9}
+    entrypoint: ["sh", "-c", "[ -f /home/node/.openclaw/openclaw.json ] || cp /seed/openclaw.json /home/node/.openclaw/openclaw.json"]
+    volumes:
+      - openclaw-state:/home/node/.openclaw
+      - ./openclaw.json:/seed/openclaw.json:ro
+
+  openclaw:
+    image: openclaw/openclaw:${OPENCLAW_VERSION:-2026.10.9}
+    restart: unless-stopped
+    command: ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18789"]
+    environment:
+      - HOME=/home/node
+      # Dein Login für die Control UI. Steht in .env.
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN:?Bitte zuerst .env mit OPENCLAW_GATEWAY_TOKEN anlegen}
+      - TZ=Europe/Berlin
+    ports:
+      # Nur auf diesem Rechner erreichbar.
+      - "127.0.0.1:18789:18789"
+    # Ollama auf deinem Rechner ist in OpenClaw unter http://host.docker.internal:11434
+    # erreichbar (Docker Desktop kann das von selbst, unter Linux braucht es diese Zeile).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    cap_drop: [NET_RAW, NET_ADMIN]
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    volumes:
+      # Einstellungen, Chats und Datenbanken in einem Docker-Volume: SQLite verträgt keinen
+      # eingebundenen Ordner von Mac oder Windows (OpenClaw stürzt sonst ab).
+      - openclaw-state:/home/node/.openclaw
+      # Die Dateien des Agenten (Arbeitsbereich) direkt hier im Ordner workspace.
+      - ./workspace:/home/node/.openclaw/workspace
+    depends_on:
+      openclaw-init:
+        condition: service_completed_successfully
+
+volumes:
+  openclaw-state:

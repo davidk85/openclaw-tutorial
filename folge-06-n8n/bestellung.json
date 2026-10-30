@@ -1,0 +1,52 @@
+{
+  "name": "Bestellung von OpenClaw",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "bestellung", "responseMode": "lastNode", "options": {} },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [0, 0],
+      "webhookId": "5b1f0c3e-7a51-4c8e-9d0b-0f6c2a7e4b11"
+    },
+    {
+      "parameters": {
+        "fromEmail": "bestellung@morgenrot.example",
+        "toEmail": "roesterei@morgenrot.example",
+        "subject": "=Neue Bestellung: {{ $json.body.kunde }}",
+        "emailFormat": "text",
+        "text": "=Kunde: {{ $json.body.kunde }}\nSorte: {{ $json.body.sorte }}\nMenge: {{ $json.body.kg }} kg\n\nEingetragen von OpenClaw.",
+        "options": {}
+      },
+      "name": "Mail an die Rösterei",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [240, 0],
+      "webhookId": "9d2e6b0a-3c1f-4f7e-8a55-2b7d9c4e1f22"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1b2c3d4-0000-4000-8000-000000000001",
+              "name": "antwort",
+              "value": "=Bestellung für {{ $('Webhook').item.json.body.kunde }} ist eingegangen: {{ $('Webhook').item.json.body.kg }} kg {{ $('Webhook').item.json.body.sorte }}. Die Rösterei hat eine Mail bekommen.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Antwort",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Mail an die Rösterei", "type": "main", "index": 0 }]] },
+    "Mail an die Rösterei": { "main": [[{ "node": "Antwort", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

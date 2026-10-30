@@ -1,0 +1,4 @@
+# Eigener Schlüssel und die Dateien des Agenten bleiben auf deinem Rechner.
+.env
+workspace/*
+!workspace/.gitkeep
